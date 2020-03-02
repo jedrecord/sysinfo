@@ -212,12 +212,12 @@ system(){
   fi
   arch="$(arch)"
   # Sometimes we see newlines in dmi output, supress with echo -n
-  echo -n "System: ${mfg} ${prod} (${arch})"
-  echo -n "OS: ${os_string} Kernel: $(uname -r)"
+  echo -n "System: "
   if [[ -f /.dockerenv ]]
   then
-    echo -n " Docker container"
+    echo -n "Docker container on "
   fi
+  echo -n "${mfg} ${prod} (${arch})"
   echo
 }
 show_os(){
