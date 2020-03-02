@@ -7,9 +7,9 @@
 #
 #  Copyright (C) 2018, 2019 Jed Record, Lenovo, and contributors
 #
-#  Version:     1.0.1
+#  Version:     1.0.2
 #
-#  Last update: 12 November 2019
+#  Last update: 2 March 2020
 #
 
 # This program is free software; you can redistribute it and/or modify it 
@@ -35,12 +35,12 @@
 
 NAME="Sysinfo"
 PURPOSE="Display a summary of system hardware, operating system, and networking"
-VERSION="1.0.1"
-UPDATED="12 Nov 2019"
+VERSION="1.0.2"
+UPDATED="3 March 2020"
 AUTHOR="Jed Record"
 EMAIL="erecord@lenovo.com"
-WEB="https://jedrecord.com/software/sysinfo/latest"
-COPYRIGHT="Copyright (C) 2018, 2019 Jed Record, Lenovo and contributors
+WEB="https://jedrecord.com/software/sysinfo"
+COPYRIGHT="Copyright (C) 2018, 2019, 2020 Jed Record, Lenovo and contributors
 License GPLv2+: GNU GPL version 2 or later <http://gnu.org/licenses/gpl.html>
 
 This is free software; you are free to change and redistribute it.
@@ -137,7 +137,7 @@ main()
 #--------------------------------------
 begin(){
   # If run from a terminal use colors
-  if [[ -t 1 ]];then
+  if [[ -t 1 && $(command -v tput) ]];then
     bold_text=$(tput bold)
     red_text=$(tput setaf 1)
     green_text=$(tput setaf 2)
@@ -213,6 +213,11 @@ system(){
   arch="$(arch)"
   # Sometimes we see newlines in dmi output, supress with echo -n
   echo -n "System: ${mfg} ${prod} (${arch})"
+  echo -n "OS: ${os_string} Kernel: $(uname -r)"
+  if [[ -f /.dockerenv ]]
+  then
+    echo -n " Docker container"
+  fi
   echo
 }
 show_os(){
