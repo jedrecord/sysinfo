@@ -58,19 +58,20 @@ Option          Meaning
 #--------------------------------------
 main()
 {
-  while getopts ":-: :a :d :l :p :r: :s :v :w" opt; do
+  while getopts ":-:adhlpr:svw" opt; do
     case "$opt" in
         -) check_long_opts "${OPTARG}"; shift ;;
         a) opt_all=true ;;
         d) opt_disk=true ;;
+        h) show_help ;;
         l) opt_long=true ;;
         p) opt_ports=true ;;
         r) RHOST="${OPTARG}"; exec_remote ;;
         s) opt_short=true ;;
         v) show_version ;;
         w) opt_web=true ;;
-       \?) show_help ;;
-        :) echo "Opt ${OPTARG} requires an argumemt" 1>2& ;;
+       \?) show_error "\"-${OPTARG}\" is an invalid option" ;;
+        :) show_error "The option \"-${OPTARG}\" requires an argumemt." ;;
     esac
   done
   if [ $? -ne 0 ];then opt_none=true; fi
@@ -86,10 +87,10 @@ main()
   fi
   header
   name
-#  ipaddr
+  # ipaddr
   ethip4
   if [ "$opt_ports" = true ];then
-#    iface
+    # iface
     tsvc
     usvc
     exit 0
@@ -105,7 +106,7 @@ main()
   fi
   gpu
   mem
-#  iface
+  # iface
   if [ "$opt_all" = true ] || [ "$opt_long" = true ];then
     tsvc
     usvc
@@ -156,8 +157,8 @@ check_long_opts(){
     about) show_about ;;
     license) show_license ;;
     version) show_version ;;
-    "help") show_help ;;
-    *) echo "\"--${long_option}\" is an invalid option"; show_help ;;
+    help) show_help ;;
+    *) show_error "\"--${long_option}\" is an invalid option" ;;
   esac
 }
 show_about(){
@@ -182,7 +183,13 @@ show_version(){
 show_help(){
 	echo "${NAME} version ${VERSION} (updated ${UPDATED})"
 	echo "${USAGE}"
-	exit 0
+  exit 0
+}
+show_error(){
+  echo "$1" 1>&2
+	echo "${NAME} version ${VERSION} (updated ${UPDATED})"
+	echo "${USAGE}"
+  exit 1
 }
 show_license(){
 	echo "${NAME} version ${VERSION} (updated ${UPDATED})"
