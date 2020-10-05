@@ -2,7 +2,7 @@
 [![Bash version](https://img.shields.io/badge/Bash-v4-4EAA25?logo=GNU-bash)](https://github.com/jedrecord/sysinfo)
 [![SUSE version](https://img.shields.io/badge/SLE-11+-73BA25?logo=openSUSE)](https://github.com/jedrecord/sysinfo)
 [![Red Hat version](https://img.shields.io/badge/RHEL-7.1+-EE0000?logo=Red-Hat)](https://github.com/jedrecord/sysinfo)
-![Twitter Follow](https://img.shields.io/twitter/follow/jedrecord?label=follow&style=social)
+[![Twitter Follow](https://img.shields.io/twitter/follow/jedrecord?label=follow&style=social)](https://twitter.com/jedrecord)
 
 # sysinfo
 Display a brief summary of system hardware, operating system, and networking for a host
