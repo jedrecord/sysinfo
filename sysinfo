@@ -379,7 +379,7 @@ tsvc(){
     done
     echo
   elif [[ -f /proc/net/tcp ]]; then
-    for port in $(cat /proc/net/tcp | awk -F"[ :]" '/:/ {print "0x"$7}'); do
+    for port in $(cat /proc/net/tcp | awk -F"[ :]" '/ 0A / {print "0x"$7}'); do
       printf "%d(%s) " $((port)) "${svc_tcp["$((port))"]}"
     done
     echo
@@ -414,7 +414,7 @@ usvc(){
     done
     echo
   elif [[ -f /proc/net/udp ]]; then
-    for port in $(cat /proc/net/udp | awk -F"[ :]" '/:/ {print "0x"$7}'); do
+    for port in $(cat /proc/net/udp | awk -F"[ :]" '/ 0A / {print "0x"$7}'); do
       printf "%d(%s) " $((port)) "${svc_udp["$((port))"]}"
     done
     echo
