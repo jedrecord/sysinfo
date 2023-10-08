@@ -227,23 +227,28 @@ ipaddr(){
   printf "IP addresses: ${ips%,*}\n"
 }
 ethip4(){
-  local eips=""
-  local interfaces=""
-  if command -v gawk > /dev/null 2>&1;then
-    interfaces="$(ip -4 -o a show scope global up | awk 'match($4,/([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})/,ip) {print $2":"ip[1]}')"
-  else
-    interfaces="$(ip -4 -o a show scope global up | awk '{print $2":"$4}'|sed "s/\/.*//")"
-  fi
-  local i=0
-  for eip in ${interfaces};do
-    if [[ $i -eq 0 ]]; then
-      eips="${eip}"
-      i=1
+  # TODO: Look in /proc/net/dev for interfaces when no ip on system
+  if command -v ip >/dev/null 2>&1; then
+    local eips=""
+    local interfaces=""
+    if command -v gawk > /dev/null 2>&1; then
+      interfaces="$(ip -4 -o a show scope global up | awk 'match($4,/([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})/,ip) {print $2":"ip[1]}')"
     else
-      eips="${eips}, ${eip}"
+      interfaces="$(ip -4 -o a show scope global up | awk '{print $2":"$4}'|sed "s/\/.*//")"
     fi
-  done
-  printf "IP4 addresses: ${eips}\n"
+    local i=0
+    for eip in ${interfaces};do
+      if [[ $i -eq 0 ]]; then
+        eips="${eip}"
+        i=1
+      else
+        eips="${eips}, ${eip}"
+      fi
+    done
+    printf "IP4 addresses: ${eips}\n"
+  else
+    ipaddr
+  fi
 }
 system(){
   if [[ $EUID -eq 0 ]] && command -v dmidecode > /dev/null 2>&1;then
@@ -383,7 +388,7 @@ tsvc(){
 usvc(){
   local ports=""
   printf "UDP ports listening: "
-  if [[ $EUID -ne 0 ]];then
+  if [[ $EUID -ne 0 ]] && command -v ss >/dev/null 2>&1; then
     if command -v gawk > /dev/null 2>&1;then
       ports="$(ss -lun | awk 'NR>1 match($4,/.*:([0-9]+)/,m){print m[1]}'|sort -u)"
     else
@@ -398,7 +403,7 @@ usvc(){
       fi
     done
     echo
-  else
+  elif command -v ss >/dev/null 2>&1; then
     if command -v gawk > /dev/null 2>&1;then
       ports="$(ss -plun | awk 'NR>1 {{match($4,/.*:([0-9]+)$/,port) match($6,/users:\(\(\"([a-z][-a-z0-9_.]+)\"/,name)} {print name[1]"("port[1]")"}};' | sort -u)"
     else
@@ -406,6 +411,11 @@ usvc(){
     fi
     for usrv in ${ports};do
       printf "$usrv "
+    done
+    echo
+  elif [[ -f /proc/net/udp ]]; then
+    for port in $(cat /proc/net/udp | awk -F"[ :]" '/:/ {print "0x"$7}'); do
+      printf "%d(%s) " $((port)) "$svc["$port/udp"]"
     done
     echo
   fi
