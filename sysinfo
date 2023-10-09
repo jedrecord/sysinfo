@@ -268,18 +268,20 @@ system(){
   elif [[ -f /sys/devices/virtual/dmi/id/sys_vendor ]]; then
     mfg="$(cat /sys/devices/virtual/dmi/id/sys_vendor)"
     prod="$(cat /sys/devices/virtual/dmi/id/product_name)"
-  else
-    mfg=""
-    prod=""
+  elif grep -qi apple /sys/devices/platform/hypervisor/modalias 2>/dev/null; then
+    mfg="Apple"
+    prod="Mac"
+  elif [[ $OSNAME == "Darwin" ]]; then
+    mfg="Apple"
+    prod="$(system_profiler SPHardwareDataType | awk '/Model Name:/ {$1=$2=""; print $0}')"
   fi
   arch="$(arch)"
   # Sometimes we see newlines in dmi output, supress with echo -n
   echo -n "System: "
-  if [[ -f /.dockerenv ]]
-  then
+  if [[ -f /.dockerenv ]] || egrep -q '/docker/|/lxc/' /proc/self/mounts >/dev/null 2>&1; then
     echo -n "Docker container on "
   fi
-  echo -n "${mfg} ${prod} (${arch})"
+  echo -n "${mfg} ${prod#  } (${arch})"
   echo
 }
 os_check(){
@@ -328,12 +330,12 @@ cpuinfo(){
     local cpucache=""
     if command -v gawk > /dev/null 2>&1;then
       skts="$(lscpu|awk -F: '/^Socket\(s\):/ {match($2,/([0-9]+)/,n);print n[1]}')"
-      cps="$(lscpu|awk -F: '/^Core\(s\) per socket:/ {match($2,/([0-9]+)/,n);print n[1]}')"
-      tpc="$(lscpu|awk -F: '/^Thread\(s\) per core:/ {match($2,/([0-9]+)/,n);print n[1]}')"
+      cps="$(lscpu|awk -F: '/^Core\(s\) per / {match($2,/([0-9]+)/,n);print n[1]}')"
+      tpc="$(lscpu|awk -F: '/^Thread\(s\) per / {match($2,/([0-9]+)/,n);print n[1]}')"
     else
       skts="$(lscpu|awk -F: '/^Socket\(s\):/ {print $2}'|sed "s/ //g")"
-      cps="$(lscpu|awk -F: '/^Core\(s\) per socket:/ {print $2}'|sed "s/ //g")"
-      tpc="$(lscpu|awk -F: '/^Thread\(s\) per core:/ {print $2}'|sed "s/ //g")"
+      cps="$(lscpu|awk -F: '/^Core\(s\) per / {print $2}'|sed "s/ //g")"
+      tpc="$(lscpu|awk -F: '/^Thread\(s\) per / {print $2}'|sed "s/ //g")"
     fi
     printf "%s sockets | %s cores per socket | %s threads per core | " \
       "${skts}" "${cps}" "${tpc}"
