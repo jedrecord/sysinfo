@@ -1,3 +1,4 @@
+
 #!/usr/bin/env bash
 #
 #  sysinfo - Display a summary of system hardware, operating system, and networking
@@ -309,8 +310,8 @@ cpu(){
       cpucount="$(lscpu|awk -F: '/^CPU\(s\):/ {match($2,/([0-9]+)/,n);print n[1]}')"
       cpumodel="$(lscpu|awk -F: '/^Model name:/ {match($2,/\s+(\w.*)/,n);print n[1]}')"
     else
-      cpucount="$(lscpu|awk -F: '/^CPU\(s\):/ {print $2}'|sed "s/ //g")"
-      cpumodel="$(lscpu|awk -F: '/^Model name:/ {print $2}'|sed "s/^\s+//g")"
+      cpucount="$(lscpu|awk -F: '/^CPU\(s\):/ {print $2}'|xargs)"
+      cpumodel="$(lscpu|awk -F: '/^Model name:/ {print $2}'|xargs)"
     fi
   else
     coresper="$(sysctl -a | awk '/machdep.cpu.cores_per_package:/ {$1=""; print $0}')"
@@ -318,8 +319,7 @@ cpu(){
     cpucount=$((cores/coresper))
     cpumodel="$(sysctl -a | awk '/machdep.cpu.brand_string:/ {$1=""; print $0}')"
   fi
-  printf "CPU Info: ${bold_text}%s${normal_text} x " "$cpucount"
-  echo "$cpumodel"
+  printf "CPU Info: ${bold_text}%s${normal_text} x %s\n" "$cpucount" "$cpumodel"
 }
 cpuinfo(){
   cpu
