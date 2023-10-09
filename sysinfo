@@ -278,7 +278,7 @@ system(){
   arch="$(arch)"
   # Sometimes we see newlines in dmi output, supress with echo -n
   echo -n "System: "
-  if [[ -f /.dockerenv ]] || egrep -q '/docker/|/lxc/' /proc/self/mounts >/dev/null 2>&1; then
+  if [[ -f /.dockerenv ]] || egrep -q '/docker/|/lxc/|/containerd/' /proc/self/mounts >/dev/null 2>&1; then
     echo -n "Docker container on "
   fi
   echo -n "${mfg} ${prod#  } (${arch})"
