@@ -219,8 +219,10 @@ ipaddr(){
     for ipa in $(ip a|awk '/global/ {print $2}'|sed 's/\/.*//');do
       ips="${ipa}, ${ips}"
     done
+  elif command -v ifconfig >/dev/null 2>&1; then
+    ips="$(ifconfig | grep "inet " | grep -Fv 127.0.0.1 | awk '{print $2}')"
   else
-    for ipa in $(hostname --all-ip-addresses);do
+    for ipa in $(hostname --all-ip-addresses 2>/dev/null);do
       ips="${ipa}, ${ips}"
     done
   fi
@@ -290,41 +292,50 @@ show_os(){
   echo "OS: ${os_string} Kernel: $(uname -r)"
 }
 cpu(){
-  if command -v gawk > /dev/null 2>&1;then
-    cpucount="$(lscpu|awk -F: '/^CPU\(s\):/ {match($2,/([0-9]+)/,n);print n[1]}')"
-    cpumodel="$(lscpu|awk -F: '/^Model name:/ {match($2,/\s+(\w.*)/,n);print n[1]}')"
+  if command -v lscpu >/dev/null 2>&1; then
+    if command -v gawk > /dev/null 2>&1; then
+      cpucount="$(lscpu|awk -F: '/^CPU\(s\):/ {match($2,/([0-9]+)/,n);print n[1]}')"
+      cpumodel="$(lscpu|awk -F: '/^Model name:/ {match($2,/\s+(\w.*)/,n);print n[1]}')"
+    else
+      cpucount="$(lscpu|awk -F: '/^CPU\(s\):/ {print $2}'|sed "s/ //g")"
+      cpumodel="$(lscpu|awk -F: '/^Model name:/ {print $2}'|sed "s/^\s+//g")"
+    fi
   else
-    cpucount="$(lscpu|awk -F: '/^CPU\(s\):/ {print $2}'|sed "s/ //g")"
-    cpumodel="$(lscpu|awk -F: '/^Model name:/ {print $2}'|sed "s/^\s+//g")"
+    coresper="$(sysctl -a | awk '/machdep.cpu.cores_per_package:/ {$1=""; print $0}')"
+    cores="$(sysctl -a | awk '/machdep.cpu.core_count:/ {$1=""; print $0}')"
+    cpucount=$((cores/coresper))
+    cpumodel="$(sysctl -a | awk '/machdep.cpu.brand_string:/ {$1=""; print $0}')"
   fi
-  printf "CPU Info: ${bold_text}%s${normal_text} x " $cpucount
-  echo $cpumodel
+  printf "CPU Info: ${bold_text}%s${normal_text} x " "$cpucount"
+  echo "$cpumodel"
 }
 cpuinfo(){
   cpu
-  local skts=""
-  local cps=""
-  local tpc=""
-  local cpucache=""
-  if command -v gawk > /dev/null 2>&1;then
-    skts="$(lscpu|awk -F: '/^Socket\(s\):/ {match($2,/([0-9]+)/,n);print n[1]}')"
-    cps="$(lscpu|awk -F: '/^Core\(s\) per socket:/ {match($2,/([0-9]+)/,n);print n[1]}')"
-    tpc="$(lscpu|awk -F: '/^Thread\(s\) per core:/ {match($2,/([0-9]+)/,n);print n[1]}')"
-  else
-    skts="$(lscpu|awk -F: '/^Socket\(s\):/ {print $2}'|sed "s/ //g")"
-    cps="$(lscpu|awk -F: '/^Core\(s\) per socket:/ {print $2}'|sed "s/ //g")"
-    tpc="$(lscpu|awk -F: '/^Thread\(s\) per core:/ {print $2}'|sed "s/ //g")"
+  if command -v lscpu >/dev/null 2>&1; then
+    local skts=""
+    local cps=""
+    local tpc=""
+    local cpucache=""
+    if command -v gawk > /dev/null 2>&1;then
+      skts="$(lscpu|awk -F: '/^Socket\(s\):/ {match($2,/([0-9]+)/,n);print n[1]}')"
+      cps="$(lscpu|awk -F: '/^Core\(s\) per socket:/ {match($2,/([0-9]+)/,n);print n[1]}')"
+      tpc="$(lscpu|awk -F: '/^Thread\(s\) per core:/ {match($2,/([0-9]+)/,n);print n[1]}')"
+    else
+      skts="$(lscpu|awk -F: '/^Socket\(s\):/ {print $2}'|sed "s/ //g")"
+      cps="$(lscpu|awk -F: '/^Core\(s\) per socket:/ {print $2}'|sed "s/ //g")"
+      tpc="$(lscpu|awk -F: '/^Thread\(s\) per core:/ {print $2}'|sed "s/ //g")"
+    fi
+    printf "%s sockets | %s cores per socket | %s threads per core | " \
+      "${skts}" "${cps}" "${tpc}"
+    if command -v numfmt > /dev/null 2>&1;then
+      # If numfmt > 8.22
+      #cpucache="$(cat /proc/cpuinfo|awk -F": " '/^cache size/ {print $2}'|numfmt -d _ --from=iec --to=iec --suffix=B --format="%.1f")"
+      cpucache="$(cat /proc/cpuinfo|awk -F": " '/^cache size/ {print $2;exit;}'|numfmt -d _ --from=iec --to=iec --suffix=B)"
+    else
+      cpucache="$(cat /proc/cpuinfo|awk -F": " '/^cache size/ {print $2;exit;}')"
+    fi
+    echo "${cpucache} cache"
   fi
-  printf "%s sockets | %s cores per socket | %s threads per core | " \
-    "${skts}" "${cps}" "${tpc}"
-  if command -v numfmt > /dev/null 2>&1;then
-    # If numfmt > 8.22
-    #cpucache="$(cat /proc/cpuinfo|awk -F": " '/^cache size/ {print $2}'|numfmt -d _ --from=iec --to=iec --suffix=B --format="%.1f")"
-    cpucache="$(cat /proc/cpuinfo|awk -F": " '/^cache size/ {print $2;exit;}'|numfmt -d _ --from=iec --to=iec --suffix=B)"
-  else
-    cpucache="$(cat /proc/cpuinfo|awk -F": " '/^cache size/ {print $2;exit;}')"
-  fi
-  echo "${cpucache} cache"
 }
 gpu(){
   if command -v nvidia-smi > /dev/null 2>&1;then
@@ -335,19 +346,23 @@ gpu(){
   fi
 }
 mem(){
-  avail="$(free -h | awk '/Mem:/{print $2}')"
-  freem="$(free -h | awk '/Mem:/{print $4}')"
-  if [[ "$freem" =~ "M" ]];then
-    freem="${red_text}$freem${normal_text}"
+  if command -v free >/dev/null 2>&1; then
+    avail="$(free -h | awk '/Mem:/{print $2}')"
+    freem="$(free -h | awk '/Mem:/{print $4}')"
+    if [[ "$freem" =~ "M" ]];then
+      freem="${red_text}$freem${normal_text}"
+    fi
+    printf "Total memory: %s Free memory: %s\n" "$avail" "$freem"
   fi
-  printf "Total memory: %s Free memory: %s\n" "$avail" "$freem"
 }
 iface(){
-  printf "Network interfaces: "
-  for foo in $(ip link show up|grep -i "state up"|awk -F": " '{print $2}'); do
-    printf "$foo "
-  done
-  echo
+  if command -v ip >/dev/null 2>&1; then
+    printf "Network interfaces: "
+    for foo in $(ip link show up|grep -i "state up"|awk -F": " '{print $2}'); do
+      printf "$foo "
+    done
+    echo
+  fi
 }
 tsvc(){
   # TODO: Find ports in /proc/net/tcp if no ss on system
@@ -367,7 +382,6 @@ tsvc(){
         printf "%s(%s) " "${tsrv}" "${tn}"
       fi
       done
-    echo
   elif command -v ss >/dev/null 2>&1; then
     if command -v gawk > /dev/null 2>&1; then
       ports="$(ss -pltn | awk 'NR>1 {{match($4,/.*:([0-9]+)$/,port) match($6,/users:\(\(\"([a-z][-a-z0-9_.]+)\"/,name)} {print name[1]"("port[1]")"}};' | sort -u)"
@@ -377,13 +391,12 @@ tsvc(){
     for tsrv in ${ports};do
       printf "$tsrv "
     done
-    echo
   elif [[ -f /proc/net/tcp ]]; then
     for port in $(cat /proc/net/tcp | awk -F"[ :]" '/ 0A / {print "0x"$7}'); do
       printf "%d(%s) " $((port)) "${svc_tcp["$((port))"]}"
     done
-    echo
   fi
+  echo
 }
 usvc(){
   local ports=""
@@ -402,7 +415,6 @@ usvc(){
         printf "%s(%s) " "${usrv}" "${un}"
       fi
     done
-    echo
   elif command -v ss >/dev/null 2>&1; then
     if command -v gawk > /dev/null 2>&1;then
       ports="$(ss -plun | awk 'NR>1 {{match($4,/.*:([0-9]+)$/,port) match($6,/users:\(\(\"([a-z][-a-z0-9_.]+)\"/,name)} {print name[1]"("port[1]")"}};' | sort -u)"
@@ -412,13 +424,12 @@ usvc(){
     for usrv in ${ports};do
       printf "$usrv "
     done
-    echo
   elif [[ -f /proc/net/udp ]]; then
     for port in $(cat /proc/net/udp | awk -F"[ :]" '/ 0A / {print "0x"$7}'); do
       printf "%d(%s) " $((port)) "${svc_udp["$((port))"]}"
     done
-    echo
   fi
+  echo
 }
 body() {
     IFS= read -r header
@@ -500,12 +511,17 @@ askweb(){
 # Not sure how usefull this is, but I think it gives an idea of server health
 # TODO: Smart checking of which log to check based on system
 log(){
-  if [[ $EUID -eq 0 ]] && [[ -f /var/log/messages ]];then
-    local logsize="$(wc -l /var/log/messages|awk '{print $1}')"
-    if [[ "${logsize}" -gt 0 ]];then
-      local warnings="$(egrep -i "fail|error" /var/log/messages | wc -l)"
-      local warnpct="$(awk -v W="${warnings}" -v L="${logsize}" 'BEGIN {print ((W * 100) / L)}')"
-      printf '%s warnings in %s log entries: %.1f%% log error rate\n' "${warnings}" "${logsize}" "${warnpct}"
+  local logfile="/var/log/messages"
+  if [[ $EUID -eq 0 ]]; then
+    if [[ -f "$logfile" ]]; then
+      local logsize="$(wc -l "$logfile" | awk '{print $1}')"
+      if [[ "${logsize}" -gt 0 ]];then
+        local warnings="$(egrep -i "fail|error" "$logfile" | wc -l)"
+        local warnpct="$(awk -v W="${warnings}" -v L="${logsize}" 'BEGIN {print ((W * 100) / L)}')"
+        printf '%s warnings in %s log entries: %.1f%% log error rate\n' "${warnings}" "${logsize}" "${warnpct}"
+      fi
+    else
+      printf "No logfile at %s\n" "$logfile"
     fi
   fi
 }
