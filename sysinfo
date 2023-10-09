@@ -53,6 +53,14 @@ Option          Meaning
  -v, --version  Print version info
  -w             List configured web directories"
 
+#
+# Global Variables
+#
+OSNAME=""
+OSRELEASE=""
+OSCODENAME=""
+OSKERNEL=""
+
 #--------------------------------------
 #             Main
 #--------------------------------------
@@ -78,6 +86,7 @@ main()
   shift $((OPTIND -1))
 
   begin
+  os_check
   if [ "$opt_short" = true ];then
     system
     show_os
@@ -273,23 +282,24 @@ system(){
   echo -n "${mfg} ${prod} (${arch})"
   echo
 }
-show_os(){
+os_check(){
   if [[ -f /etc/lsb-release ]];then
     source /etc/lsb-release
-    os_string="${red_text}${DISTRIB_ID}${normal_text} ${DISTRIB_RELEASE}"
-		if [[ -n "${DISTRIB_CODENAME}" ]];then
-			os_string="${os_string} (${DISTRIB_CODENAME})"
-		fi
+    OSNAME="$DISTRIB_ID"
+    OSRELEASE="$DISTRIB_RELEASE"
+    OSCODENAME="$DISTRIB_CODENAME"
   elif [[ -f /etc/os-release ]];then
     source /etc/os-release
-    os_string="${red_text}${NAME}${normal_text} ${VERSION_ID}"
-		if [[ -n "${VERSION_CODENAME}" ]];then
-			os_string="${os_string} (${VERSION_CODENAME})"
-		fi
+    OSNAME="$NAME"
+    OSRELEASE="$VERSION_ID"
+    OSCODENAME="$VERSION_CODENAME"
   else
-    os_string="${red_text}$(uname)${normal_text} Kernel: $(uname -r)"
+    OSNAME="$(uname)"
   fi
-  echo "OS: ${os_string} Kernel: $(uname -r)"
+  OSKERNEL="$(uname -r)"
+}
+show_os(){
+  echo "OS: ${red_text}${OSNAME}${normal_text} $OSRELEASE $OSCODENAME Kernel: $OSKERNEL"
 }
 cpu(){
   if command -v lscpu >/dev/null 2>&1; then
@@ -431,17 +441,25 @@ usvc(){
   fi
   echo
 }
-body() {
+filter-body() {
     IFS= read -r header
     printf '%s\n' "$header"
     "$@"
 }
 space(){
+  # TODO: Use systemprofiler for info gathering on Apple computers
+  # Eg: system_profiler SPSoftwareDataType SPHardwareDataType SPMemoryDataType SPPowerDataType SPStorageDataType
   echo "Disk space: "
   #df -h --output=target,size,avail,pcent -t xfs -t ext3 -t ext4
-  df -h --output=target,fstype,size,avail,pcent \
-    | body sort -rhk 5 \
-    | grep -v 'tmpfs'
+  if [[ $OSNAME == "Darwin" ]]; then
+    df -h \
+      | filter-body sort -rhk 5 \
+      | grep -v 'map auto_home'
+  else
+    df -h --output=target,fstype,size,avail,pcent \
+      | filter-body sort -rhk 5 \
+      | grep -v 'tmpfs'
+  fi
 }
 dirs(){
   echo
