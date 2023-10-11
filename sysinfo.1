@@ -1,0 +1,56 @@
+.Dd October 10, 2023
+.Dt sysinfo 1
+.Os
+.Sh NAME
+.Nm sysinfo
+.Nd Display a brief summary of system hardware and resources
+.Sh SYNOPSIS
+.Nm sysinfo
+.Op Fl adhlpsvw
+.Sh DESCRIPTION
+.Nm sysinfo
+prints a summary of system hardware, operating system, and 
+networking for a host.
+.Nm sysinfo
+will also tell you if 
+the host you're logged in to is a VM or container.
+.Pp
+The default action is to print hostname, active IP addresses
+and interfaces, machine and os, CPU(s), RAM, and active listening 
+TCP ports.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl a
+Show detailed system information
+.It Fl d
+Show disk usage
+.It Fl h Fl Fl help
+Show usage and options
+.It Fl l
+Print a longer list of info than default
+.It Fl Fl license
+Print full program license to the screen
+.It Fl p
+Show active services listening on TCP + UDP ports
+.It Fl s
+Show a short summary
+.It Fl v Fl Fl version
+Print version info
+.It Fl w
+List configured web directories
+.El
+.Sh "SEE ALSO"
+.Lk https://github.com/jedrecord/sysinfo Website
+.Sh AUTHOR
+Copyright (C) 2023 
+.An Jed Record Aq Mt jed.record@gmail.com
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License 2.0
+as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
