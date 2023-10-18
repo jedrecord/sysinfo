@@ -1,12 +1,12 @@
 #!/bin/bash
 
 VERSION=1.0.0
-REVSION=1
+REVISION=1
 
 docker run -v $(pwd):/src jrecord/fpm \
   -s dir \
   -t deb \
-  -p sysinfo-${VERSION}-${REVISION}.deb \
+  -p "sysinfo-${VERSION}-${REVISION}.deb" \
   --name sysinfo \
   --license gpl2 \
   --version $VERSION \

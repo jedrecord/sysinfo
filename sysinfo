@@ -230,7 +230,9 @@ ipaddr(){
       ips="${ipa}, ${ips}"
     done
   elif command -v ifconfig >/dev/null 2>&1; then
-    ips="$(ifconfig | grep "inet " | grep -Fv 127.0.0.1 | awk '{print $2}')"
+    for ipa in $(ifconfig | grep "inet " | grep -Fv 127.0.0.1 | awk '{print $2}');do
+      ips="${ipa}, ${ips}"
+    done
   else
     for ipa in $(hostname --all-ip-addresses 2>/dev/null);do
       ips="${ipa}, ${ips}"
@@ -277,13 +279,12 @@ system(){
     prod="$(system_profiler SPHardwareDataType | awk '/Model Name:/ {$1=$2=""; print $0}')"
   fi
   arch="$(arch)"
-  # Sometimes we see newlines in dmi output, supress with echo -n
-  echo -n "System: "
+  # Sometimes we see newlines in dmi output, supress with printf
+  printf "System: "
   if [[ -f /.dockerenv ]] || egrep -q '/docker/|/lxc/|/containerd/' /proc/self/mounts >/dev/null 2>&1; then
-    echo -n "Docker container on "
+      printf "Docker container on "
   fi
-  echo -n "${mfg} ${prod#  } (${arch})"
-  echo
+  printf "${mfg} ${prod#  } (${arch})\n"
 }
 os_check(){
   if [[ -f /etc/lsb-release ]];then
@@ -443,7 +444,7 @@ usvc(){
   fi
   echo
 }
-filter-body() {
+filterbody() {
     IFS= read -r header
     printf '%s\n' "$header"
     "$@"
@@ -455,11 +456,11 @@ space(){
   #df -h --output=target,size,avail,pcent -t xfs -t ext3 -t ext4
   if [[ $OSNAME == "Darwin" ]]; then
     df -h \
-      | filter-body sort -rhk 5 \
+      | filterbody sort -rhk 5 \
       | grep -v 'map auto_home'
   else
     df -h --output=target,fstype,size,avail,pcent \
-      | filter-body sort -rhk 5 \
+      | filterbody sort -rhk 5 \
       | grep -v 'tmpfs'
   fi
 }
@@ -477,11 +478,11 @@ dirs(){
     printf $(tput cuu1)
   else
     # Mover cusor back 52 spaces (to beginning of line)
-    echo -en "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
+    printf "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
     # Overight previous text
-    echo -n "                                                    "
+    printf "                                                    "
     # Move cursor back to beginning of line
-    echo -en "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
+    printf "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
   fi
   if [[ ! -z ${homes+x} ]]; then
     echo "Top home directories by size: "
