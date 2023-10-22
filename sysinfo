@@ -30,7 +30,7 @@
 NAME="Sysinfo"
 PURPOSE="Display a summary of system hardware, operating system, and networking"
 VERSION="1.0.3"
-UPDATED="11 March 2020"
+UPDATED="22 October 2023"
 AUTHOR="Jed Record"
 EMAIL="jed.record@gmail.com"
 WEB="https://github.com/jedrecord/sysinfo"
