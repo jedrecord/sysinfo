@@ -1,6 +1,7 @@
 [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
 [![Bash version](https://img.shields.io/badge/Bash-v4-4EAA25?logo=GNU-bash)](https://github.com/jedrecord/sysinfo)
 [![SUSE version](https://img.shields.io/badge/SLE-11+-73BA25?logo=openSUSE)](https://github.com/jedrecord/sysinfo)
+[![Ubuntu version](https://shields.io/badge/Ubuntu-16+-E95420?logo=ubuntu)](https://github.com/jedrecord/sysinfo)
 [![Red Hat version](https://img.shields.io/badge/RHEL-7.1+-EE0000?logo=Red-Hat)](https://github.com/jedrecord/sysinfo)
 [![Twitter Follow](https://img.shields.io/twitter/follow/jedrecord?label=follow&style=social)](https://twitter.com/jedrecord)
 
